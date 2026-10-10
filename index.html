@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en-GB" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Team Quest Planner</title>
+<style>
+:root{
+  --bg:#f6f3ff; --ink:#24204a; --muted:#6b6790; --card:#ffffff; --line:#e6e0ff;
+  --purple:#7c4dff; --pink:#ff4fa3; --orange:#ff9f1c; --yellow:#ffd23f;
+  --green:#2ec4b6; --blue:#3a86ff; --red:#ff5964;
+  --shadow:0 8px 24px rgba(76,48,170,.12);
+  --radius:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#16132b; --ink:#f3f0ff; --muted:#a9a3d1; --card:#221d40; --line:#352d63; --shadow:0 8px 24px rgba(0,0,0,.35); }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;
+  background-image:radial-gradient(circle at 10% 10%,rgba(255,79,163,.12) 0 160px,transparent 161px),
+  radial-gradient(circle at 90% 20%,rgba(58,134,255,.12) 0 200px,transparent 201px),
+  radial-gradient(circle at 50% 100%,rgba(255,210,63,.15) 0 240px,transparent 241px);background-attachment:fixed}
+button{font:inherit;cursor:pointer}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 28px;
+  background:linear-gradient(120deg,var(--purple),var(--pink) 55%,var(--orange));color:#fff;box-shadow:var(--shadow)}
+.logo{font-size:34px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px) rotate(-6deg)}}
+header h1{margin:0;font-size:24px;letter-spacing:.3px}
+header small{display:block;opacity:.9;font-size:13px}
+.spacer{flex:1}
+.who{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.18);padding:6px 8px 6px 14px;border-radius:999px}
+.who select{border:0;border-radius:999px;padding:6px 10px;font:inherit;background:#fff;color:#24204a}
+.hbtn{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:999px;padding:7px 14px;font-weight:600}
+.hbtn:hover{background:rgba(255,255,255,.35)}
+.sync{font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.18)}
+main{max-width:1320px;margin:0 auto;padding:22px 24px 80px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--card);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;border-bottom:5px solid var(--c)}
+.stat .ic{font-size:30px;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,transparent)}
+.stat b{font-size:26px;display:block;line-height:1}
+.stat span{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.tab{border:0;background:var(--card);color:var(--ink);padding:10px 18px;border-radius:999px;font-weight:700;box-shadow:var(--shadow);transition:transform .15s}
+.tab:hover{transform:translateY(-2px)}
+.tab.active{background:var(--ink);color:var(--bg)}
+.tab .count{display:inline-block;min-width:22px;padding:1px 7px;margin-inline-start:6px;border-radius:999px;background:var(--pink);color:#fff;font-size:12px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.toolbar input,.toolbar select{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:9px 12px;font:inherit}
+.toolbar input{min-width:220px;flex:1}
+.addbtn{border:0;border-radius:14px;padding:11px 20px;font-weight:800;color:#fff;background:linear-gradient(120deg,var(--green),var(--blue));box-shadow:var(--shadow)}
+.addbtn:hover{filter:brightness(1.08)}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.col{background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:22px;padding:14px;min-height:200px;border:2px dashed transparent;transition:border-color .15s,background .15s}
+.col.drag{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--card))}
+.col h2{display:flex;align-items:center;gap:8px;margin:2px 4px 14px;font-size:17px}
+.col h2 .pill{margin-inline-start:auto;background:var(--c);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px}
+.col h2 .dot{font-size:22px}
+.task{background:var(--card);border-radius:16px;padding:14px 14px 12px;margin-bottom:12px;box-shadow:var(--shadow);border-inline-start:7px solid var(--tc);position:relative;animation:pop .25s ease-out;cursor:grab}
+.task:hover{transform:translateY(-2px);transition:transform .15s}
+@keyframes pop{from{transform:scale(.92);opacity:0}}
+.task .top{display:flex;gap:10px;align-items:flex-start}
+.task .emo{font-size:26px;width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--tc) 20%,transparent)}
+.task h3{margin:0 0 4px;font-size:15.5px;line-height:1.3}
+.task p{margin:0;color:var(--muted);font-size:13px;line-height:1.4;word-break:break-word}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--ink)}
+.tag.hi{background:#ffe0e3;color:#c41d2b}.tag.md{background:#fff1cc;color:#9a6a00}.tag.lo{background:#d9f7f3;color:#137a70}
+.tag.flow{background:#e3ecff;color:#1f4fb8}.tag.me{background:#f2e6ff;color:#6a2fd6}
+.tag.late{background:var(--red);color:#fff}
+.actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.act{border:0;border-radius:10px;padding:6px 10px;font-size:12.5px;font-weight:700;background:var(--line);color:var(--ink)}
+.act:hover{filter:brightness(.95)}
+.act.claim{background:linear-gradient(120deg,var(--orange),var(--pink));color:#fff}
+.act.done{background:var(--green);color:#fff}
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex:none}
+.assignee{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:14px}
+.empty .big{font-size:42px;display:block;margin-bottom:6px}
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.person{background:var(--card);border-radius:22px;padding:16px;box-shadow:var(--shadow)}
+.person .ph{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.person .ph .avatar{width:46px;height:46px;font-size:16px}
+.person .ph b{font-size:16px}
+.bar{height:10px;border-radius:999px;background:var(--line);overflow:hidden;margin:4px 0 12px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:999px;transition:width .5s}
+.mini{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--tc) 10%,transparent);margin-bottom:6px;font-size:13.5px}
+.mini.isdone{opacity:.55;text-decoration:line-through}
+/* modal */
+dialog{border:0;border-radius:24px;padding:0;width:min(560px,94vw);background:var(--card);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(30,20,70,.55);backdrop-filter:blur(3px)}
+.mh{padding:18px 22px;background:linear-gradient(120deg,var(--blue),var(--purple));color:#fff;display:flex;align-items:center;gap:10px}
+.mh h2{margin:0;font-size:19px}
+.mb{padding:18px 22px;display:grid;gap:12px}
+.mb label{font-weight:700;font-size:13px;display:grid;gap:5px}
+.mb input,.mb textarea,.mb select{border:2px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;background:var(--bg);color:var(--ink)}
+.mb textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.picker{display:flex;flex-wrap:wrap;gap:6px}
+.picker button{border:2px solid transparent;background:var(--bg);border-radius:12px;font-size:22px;width:42px;height:42px}
+.picker button.sel{border-color:var(--purple);transform:scale(1.08)}
+.swatch{width:34px!important;height:34px!important;border-radius:50%!important}
+.mf{display:flex;justify-content:flex-end;gap:10px;padding:0 22px 20px}
+.btn{border:0;border-radius:12px;padding:10px 18px;font-weight:800}
+.btn.primary{background:linear-gradient(120deg,var(--green),var(--blue));color:#fff}
+.btn.ghost{background:var(--line);color:var(--ink)}
+.btn.danger{background:var(--red);color:#fff;margin-inline-end:auto}
+.note{font-size:12.5px;color:var(--muted);background:var(--bg);border-radius:12px;padding:10px 12px;line-height:1.5}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;font-weight:700;box-shadow:var(--shadow);transition:transform .3s;z-index:99}
+.toast.show{transform:translateX(-50%) translateY(0)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:98}
+.hidden{display:none!important}
+@media (max-width:640px){header{padding:14px}.row{grid-template-columns:1fr}main{padding:16px 12px 80px}}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<header>
+  <div class="logo">🚀</div>
+  <div><h1>Team Quest Planner</h1><small>Grab a quest, smash it, celebrate 🎉</small></div>
+  <div class="spacer"></div>
+  <span class="sync" id="syncState">⚪ Not synced</span>
+  <button class="hbtn" id="refreshBtn" type="button">🔄 Refresh</button>
+  <div class="who"><span>🙋 I am</span><select id="meSelect" aria-label="Who are you?"></select></div>
+  <button class="hbtn" id="settingsBtn" type="button">⚙️ Settings</button>
+</header>
+
+<main>
+  <section class="stats" id="stats"></section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-view="mine" type="button">🦸 My Quests<span class="count" id="cMine">0</span></button>
+    <button class="tab" data-view="pool" type="button">🎁 Up for Grabs<span class="count" id="cPool">0</span></button>
+    <button class="tab" data-view="team" type="button">🗺️ Team Board</button>
+    <button class="tab" data-view="people" type="button">👥 By Person</button>
+  </nav>
+
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="🔍 Search quests…" aria-label="Search">
+    <select id="filterPriority" aria-label="Priority filter">
+      <option value="">🎚️ All priorities</option><option value="High">🔥 High</option><option value="Medium">⚡ Medium</option><option value="Low">🌱 Low</option>
+    </select>
+    <select id="filterSource" aria-label="Source filter">
+      <option value="">📦 All sources</option><option value="flow">🤖 From flow</option><option value="manual">✍️ Created by team</option>
+    </select>
+    <button class="addbtn" id="addBtn" type="button">➕ New Quest</button>
+  </div>
+
+  <section id="view"></section>
+</main>
+
+<!-- Task modal -->
+<dialog id="taskDlg">
+  <form method="dialog" id="taskForm">
+    <div class="mh"><span id="dlgEmoji" style="font-size:26px">✨</span><h2 id="dlgTitle">New Quest</h2></div>
+    <div class="mb">
+      <label>Title<input id="fTitle" required maxlength="120" placeholder="e.g. Draft the Q4 client newsletter"></label>
+      <label>Details<textarea id="fDesc" placeholder="What does done look like?"></textarea></label>
+      <div class="row">
+        <label>Assign to<select id="fAssignee"></select></label>
+        <label>Status<select id="fStatus"><option>To Do</option><option>In Progress</option><option>Done</option></select></label>
+      </div>
+      <div class="row">
+        <label>Priority<select id="fPriority"><option value="High">🔥 High</option><option value="Medium" selected>⚡ Medium</option><option value="Low">🌱 Low</option></select></label>
+        <label>Due date<input id="fDue" type="date"></label>
+      </div>
+      <label>Category<input id="fCategory" list="catList" placeholder="e.g. Marketing"></label>
+      <datalist id="catList"></datalist>
+      <div><b style="font-size:13px">Icon</b><div class="picker" id="emojiPicker"></div></div>
+      <div><b style="font-size:13px">Colour</b><div class="picker" id="colourPicker"></div></div>
+    </div>
+    <div class="mf">
+      <button class="btn danger hidden" id="deleteBtn" type="button">🗑️ Delete</button>
+      <button class="btn ghost" value="cancel" type="button" id="cancelBtn">Cancel</button>
+      <button class="btn primary" id="saveBtn" type="submit">💾 Save Quest</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Settings modal -->
+<dialog id="setDlg">
+  <form method="dialog" id="setForm">
+    <div class="mh"><span style="font-size:26px">⚙️</span><h2>Connect to SharePoint</h2></div>
+    <div class="mb">
+      <div class="note">Paste the HTTP trigger URLs from your two Power Automate flows. Leave blank to run in <b>demo mode</b> (tasks are saved in this browser only).</div>
+      <label>📥 "Get tasks" flow URL<input id="sGet" placeholder="https://prod-xx.westeurope.logic.azure.com/workflows/..."></label>
+      <label>📤 "Save task" flow URL<input id="sSave" placeholder="https://prod-xx.westeurope.logic.azure.com/workflows/..."></label>
+      <label>👥 Team members (comma separated)<input id="sTeam" placeholder="Lucy Squires, Sam Patel, Alex Chen"></label>
+      <label>⏱️ Auto-refresh every (minutes, 0 = off)<input id="sRefresh" type="number" min="0" max="60"></label>
+      <div class="note">💡 Tip: your admin can bake these into the <code>DEFAULT_CONFIG</code> block in the page source so the team never has to paste them.</div>
+    </div>
+    <div class="mf">
+      <button class="btn danger" id="resetDemo" type="button">♻️ Reset demo data</button>
+      <button class="btn ghost" type="button" id="setCancel">Cancel</button>
+      <button class="btn primary" type="submit">✅ Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — edit these before publishing to GitHub Pages so the whole
+   team is connected automatically. Settings saved in the browser
+   override these values.
+   ===================================================================== */
+const DEFAULT_CONFIG = {
+  getUrl: "",      // Power Automate flow 1: returns all tasks from the SharePoint list
+  saveUrl: "",     // Power Automate flow 2: creates / updates / deletes a task
+  team: ["Lucy Squires", "Sam Patel", "Alex Chen", "Priya Shah", "Jordan Lee"],
+  refreshMinutes: 2
+};
+
+/* ---------------- state ---------------- */
+const LS = { cfg: "tqp.config", tasks: "tqp.tasks", me: "tqp.me" };
+let cfg = Object.assign({}, DEFAULT_CONFIG, JSON.parse(localStorage.getItem(LS.cfg) || "{}"));
+let tasks = [];
+let me = localStorage.getItem(LS.me) || cfg.team[0] || "";
+let view = "mine";
+let editing = null;
+let refreshTimer = null;
+
+const EMOJIS = ["✨","🚀","📊","📝","💡","🎯","📣","🛠️","📅","💬","🔍","🎨","📦","⚖️","💼","🧪","🤝","🏆","📚","🐛"];
+const COLOURS = ["#7c4dff","#ff4fa3","#ff9f1c","#ffd23f","#2ec4b6","#3a86ff","#ff5964","#8ac926"];
+const AV_COLOURS = ["#7c4dff","#ff4fa3","#ff9f1c","#2ec4b6","#3a86ff","#ff5964","#8ac926","#c77dff","#f15bb5","#00bbf9"];
+const STATUSES = [
+  {key:"To Do", icon:"📋", c:"#3a86ff"},
+  {key:"In Progress", icon:"⚙️", c:"#ff9f1c"},
+  {key:"Done", icon:"🏁", c:"#2ec4b6"}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => "local-" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const initials = n => (n||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+const avColour = n => { let h=0; for (const ch of (n||"")) h=(h*31+ch.charCodeAt(0))>>>0; return AV_COLOURS[h%AV_COLOURS.length]; };
+const today = () => new Date().toISOString().slice(0,10);
+const isLive = () => !!(cfg.getUrl && cfg.saveUrl);
+
+/* ---------------- data normalisation ---------------- */
+// Accepts SharePoint-ish field names as well as the app's own.
+function normalise(t){
+  const pick = (...k) => { for (const x of k) if (t[x] !== undefined && t[x] !== null && t[x] !== "") return t[x]; return ""; };
+  let assignee = pick("assignee","AssignedTo","Assignee");
+  if (typeof assignee === "object") assignee = assignee.DisplayName || assignee.Title || assignee.Email || "";
+  let status = pick("status","Status"); if (typeof status === "object") status = status.Value;
+  let priority = pick("priority","Priority"); if (typeof priority === "object") priority = priority.Value;
+  let due = pick("dueDate","DueDate"); if (due) due = String(due).slice(0,10);
+  return {
+    id: String(pick("id","ID","Id") || uid()),
+    title: pick("title","Title") || "Untitled quest",
+    description: pick("description","Description"),
+    assignee: assignee || "",
+    status: STATUSES.some(s=>s.key===status) ? status : "To Do",
+    priority: ["High","Medium","Low"].includes(priority) ? priority : "Medium",
+    dueDate: due,
+    category: pick("category","Category"),
+    emoji: pick("emoji","Emoji") || "✨",
+    colour: pick("colour","Colour","color") || "#7c4dff",
+    source: (pick("source","Source") || "flow").toLowerCase() === "manual" ? "manual" : "flow",
+    createdBy: pick("createdBy","CreatedByName")
+  };
+}
+
+/* ---------------- demo data ---------------- */
+function demoTasks(){
+  const d = n => { const x = new Date(); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+  const t = cfg.team;
+  return [
+    {title:"Review new client intake forms",description:"Check the 6 forms submitted via the website this week.",priority:"High",dueDate:d(1),category:"Clients",emoji:"📝",colour:"#ff4fa3",source:"flow"},
+    {title:"Update the matter tracker",description:"Bring the tracker in line with last week's closings.",priority:"Medium",dueDate:d(3),category:"Ops",emoji:"📊",colour:"#3a86ff",source:"flow"},
+    {title:"Prep slides for Monday stand-up",priority:"Low",dueDate:d(2),category:"Team",emoji:"📣",colour:"#ff9f1c",source:"flow"},
+    {title:"Proofread the precedent bank update",assignee:t[0],status:"In Progress",priority:"High",dueDate:d(0),category:"Knowledge",emoji:"📚",colour:"#7c4dff",source:"flow"},
+    {title:"Organise team lunch 🍕",assignee:t[1]||t[0],status:"To Do",priority:"Low",dueDate:d(6),category:"Fun",emoji:"🤝",colour:"#8ac926",source:"manual",createdBy:t[1]||t[0]},
+    {title:"Fix broken links on intranet page",assignee:t[2]||t[0],status:"Done",priority:"Medium",dueDate:d(-2),category:"Ops",emoji:"🐛",colour:"#ff5964",source:"flow"},
+    {title:"Research e-signature options",assignee:t[3]||t[0],status:"In Progress",priority:"Medium",dueDate:d(4),category:"Research",emoji:"🔍",colour:"#2ec4b6",source:"manual",createdBy:t[3]||t[0]},
+    {title:"Send monthly KPI summary",assignee:t[0],status:"To Do",priority:"Medium",dueDate:d(-1),category:"Reporting",emoji:"🎯",colour:"#ffd23f",source:"flow"}
+  ].map(x => normalise(Object.assign({id:uid(),assignee:"",status:"To Do"},x)));
+}
+
+/* ---------------- backend ---------------- */
+async function load(){
+  if (!isLive()){
+    const saved = localStorage.getItem(LS.tasks);
+    tasks = saved ? JSON.parse(saved).map(normalise) : demoTasks();
+    persistLocal();
+    setSync("🟡 Demo mode (this browser only)");
+    render(); return;
+  }
+  setSync("🔄 Syncing…");
+  try{
+    const r = await fetch(cfg.getUrl, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({action:"list"})});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    const list = Array.isArray(data) ? data : (data.tasks || data.value || []);
+    tasks = list.map(normalise);
+    setSync("🟢 Synced " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
+  }catch(e){
+    console.error(e);
+    setSync("🔴 Sync failed");
+    toast("😬 Couldn't reach SharePoint — check the flow URL in Settings");
+  }
+  render();
+}
+
+async function save(action, task){
+  if (!isLive()){
+    if (action === "delete") tasks = tasks.filter(t => t.id !== task.id);
+    else if (action === "create") tasks.push(task);
+    else tasks = tasks.map(t => t.id === task.id ? task : t);
+    persistLocal(); render(); return true;
+  }
+  setSync("🔄 Saving…");
+  try{
+    const r = await fetch(cfg.saveUrl, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({action, task})});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    await load();
+    return true;
+  }catch(e){
+    console.error(e);
+    setSync("🔴 Save failed");
+    toast("😬 Save failed — nothing was changed in SharePoint");
+    return false;
+  }
+}
+function persistLocal(){ localStorage.setItem(LS.tasks, JSON.stringify(tasks)); }
+function setSync(s){ $("#syncState").textContent = s; }
+
+/* ---------------- rendering ---------------- */
+function filtered(list){
+  const q = $("#search").value.trim().toLowerCase();
+  const p = $("#filterPriority").value, s = $("#filterSource").value;
+  return list.filter(t =>
+    (!q || [t.title,t.description,t.category,t.assignee].join(" ").toLowerCase().includes(q)) &&
+    (!p || t.priority === p) && (!s || t.source === s));
+}
+const prioTag = p => p==="High" ? '<span class="tag hi">🔥 High</span>' : p==="Low" ? '<span class="tag lo">🌱 Low</span>' : '<span class="tag md">⚡ Medium</span>';
+function dueTag(t){
+  if (!t.dueDate) return "";
+  const late = t.status !== "Done" && t.dueDate < today();
+  const isToday = t.dueDate === today();
+  const nice = new Date(t.dueDate+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  return `<span class="tag ${late?"late":""}">${late?"⏰ Overdue":isToday?"📍 Today":"📅 "+nice}</span>`;
+}
+function avatar(n){ return n ? `<span class="avatar" style="background:${avColour(n)}">${esc(initials(n))}</span>` : `<span class="avatar" style="background:#b8b3d6">?</span>`; }
+
+function card(t){
+  const mine = t.assignee === me;
+  const acts = [];
+  if (!t.assignee) acts.push(`<button class="act claim" data-act="claim" data-id="${esc(t.id)}" type="button">🙋 I'll take it!</button>`);
+  if (mine && t.status === "To Do") acts.push(`<button class="act" data-act="start" data-id="${esc(t.id)}" type="button">▶️ Start</button>`);
+  if (mine && t.status !== "Done") acts.push(`<button class="act done" data-act="done" data-id="${esc(t.id)}" type="button">✅ Done</button>`);
+  if (mine && t.status !== "Done") acts.push(`<button class="act" data-act="release" data-id="${esc(t.id)}" type="button">↩️ Release</button>`);
+  acts.push(`<button class="act" data-act="edit" data-id="${esc(t.id)}" type="button">✏️ Edit</button>`);
+  return `<article class="task" draggable="true" data-id="${esc(t.id)}" style="--tc:${esc(t.colour)}">
+    <div class="top"><div class="emo">${esc(t.emoji)}</div>
+      <div><h3>${esc(t.title)}</h3>${t.description?`<p>${esc(t.description)}</p>`:""}</div></div>
+    <div class="tags">${prioTag(t.priority)}${dueTag(t)}${t.category?`<span class="tag">🏷️ ${esc(t.category)}</span>`:""}
+      ${t.source==="flow"?'<span class="tag flow">🤖 Flow</span>':'<span class="tag me">✍️ Team</span>'}</div>
+    <div class="assignee">${avatar(t.assignee)} ${t.assignee?esc(t.assignee)+(mine?" (you)":""):"Unclaimed"}</div>
+    <div class="actions">${acts.join("")}</div>
+  </article>`;
+}
+function empty(icon,msg){ return `<div class="empty"><span class="big">${icon}</span>${msg}</div>`; }
+
+function board(list, emptyMsgs){
+  return `<div class="board">` + STATUSES.map(s => {
+    const items = list.filter(t => t.status === s.key)
+      .sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
+    return `<div class="col" data-status="${s.key}" style="--c:${s.c}">
+      <h2><span class="dot">${s.icon}</span>${s.key}<span class="pill">${items.length}</span></h2>
+      ${items.map(card).join("") || empty(emptyMsgs[s.key][0], emptyMsgs[s.key][1])}
+    </div>`;
+  }).join("") + `</div>`;
+}
+
+function render(){
+  const all = tasks;
+  const mineAll = all.filter(t => t.assignee === me);
+  const pool = all.filter(t => !t.assignee && t.status !== "Done");
+  $("#cMine").textContent = mineAll.filter(t=>t.status!=="Done").length;
+  $("#cPool").textContent = pool.length;
+
+  const done = all.filter(t=>t.status==="Done").length;
+  const overdue = all.filter(t=>t.status!=="Done" && t.dueDate && t.dueDate<today()).length;
+  const myDone = mineAll.filter(t=>t.status==="Done").length;
+  const stats = [
+    ["🦸","My open quests", mineAll.filter(t=>t.status!=="Done").length, "#7c4dff"],
+    ["🏆","I've completed", myDone, "#ffd23f"],
+    ["🎁","Up for grabs", pool.length, "#ff4fa3"],
+    ["🔥","Team in progress", all.filter(t=>t.status==="In Progress").length, "#ff9f1c"],
+    ["✅","Team done", done, "#2ec4b6"],
+    ["⏰","Overdue", overdue, "#ff5964"]
+  ];
+  $("#stats").innerHTML = stats.map(([i,l,v,c]) => `<div class="stat" style="--c:${c}"><div class="ic">${i}</div><div><b>${v}</b><span>${l}</span></div></div>`).join("");
+
+  let html = "";
+  if (view === "mine"){
+    html = board(filtered(mineAll), {
+      "To Do":["🌈","Nothing queued — grab one from <b>Up for Grabs</b>!"],
+      "In Progress":["☕","Nothing in flight right now."],
+      "Done":["🎯","Finish a quest to see it here."]});
+  } else if (view === "pool"){
+    const list = filtered(pool);
+    html = list.length ? `<div class="board">${list.map(card).join("")}</div>` : empty("🎉","Everything's been claimed. Legends!");
+  } else if (view === "team"){
+    html = board(filtered(all), {
+      "To Do":["📭","No quests waiting."],"In Progress":["😴","Nobody's mid-quest."],"Done":["🌱","No wins yet — let's go!"]});
+  } else {
+    const names = [...new Set([...cfg.team, ...all.map(t=>t.assignee).filter(Boolean)])];
+    html = `<div class="people">` + names.map(n => {
+      const theirs = filtered(all.filter(t=>t.assignee===n));
+      const d = theirs.filter(t=>t.status==="Done").length;
+      const pct = theirs.length ? Math.round(d/theirs.length*100) : 0;
+      const items = theirs.sort((a,b)=>(a.status==="Done")-(b.status==="Done"))
+        .map(t=>`<div class="mini ${t.status==="Done"?"isdone":""}" style="--tc:${esc(t.colour)}">${esc(t.emoji)} ${esc(t.title)} <span style="margin-inline-start:auto">${STATUSES.find(s=>s.key===t.status).icon}</span></div>`).join("");
+      return `<div class="person"><div class="ph">${avatar(n)}<div><b>${esc(n)}${n===me?" (you)":""}</b><div style="font-size:12.5px;color:var(--muted)">${theirs.length} quests · ${d} done</div></div></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>${items || empty("🏖️","No quests yet")}</div>`;
+    }).join("") + `</div>`;
+  }
+  $("#view").innerHTML = html;
+}
+
+/* ---------------- actions ---------------- */
+async function update(id, changes, msg){
+  const t = tasks.find(x => x.id === id); if (!t) return;
+  const next = Object.assign({}, t, changes);
+  const wasDone = t.status === "Done";
+  if (await save("update", next)){
+    if (msg) toast(msg);
+    if (!wasDone && next.status === "Done") confetti();
+  }
+}
+$("#view").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const id = b.dataset.id, a = b.dataset.act;
+  if (!me) { toast("🙋 Pick your name at the top first"); return; }
+  if (a === "claim") update(id, {assignee: me}, "🙌 It's yours, " + me.split(" ")[0] + "!");
+  if (a === "start") update(id, {status: "In Progress"}, "🚀 Quest started!");
+  if (a === "done") update(id, {status: "Done"}, "🏆 Quest complete! Nice one!");
+  if (a === "release") update(id, {assignee: "", status: "To Do"}, "↩️ Back in the pool");
+  if (a === "edit") openTask(tasks.find(t=>t.id===id));
+});
+// drag & drop between columns
+let dragId = null;
+$("#view").addEventListener("dragstart", e => { const c = e.target.closest(".task"); if (c){ dragId = c.dataset.id; e.dataTransfer.effectAllowed="move"; }});
+$("#view").addEventListener("dragover", e => { const col = e.target.closest(".col"); if (col && dragId){ e.preventDefault(); col.classList.add("drag"); }});
+$("#view").addEventListener("dragleave", e => { const col = e.target.closest(".col"); if (col) col.classList.remove("drag"); });
+$("#view").addEventListener("drop", e => {
+  const col = e.target.closest(".col"); if (!col || !dragId) return;
+  e.preventDefault(); col.classList.remove("drag");
+  const t = tasks.find(x=>x.id===dragId); const st = col.dataset.status;
+  if (t && t.status !== st){
+    const ch = {status: st}; if (!t.assignee && st !== "To Do") ch.assignee = me;
+    update(dragId, ch, STATUSES.find(s=>s.key===st).icon + " Moved to " + st);
+  }
+  dragId = null;
+});
+
+/* ---------------- task modal ---------------- */
+let selEmoji = "✨", selColour = COLOURS[0];
+function buildPickers(){
+  $("#emojiPicker").innerHTML = EMOJIS.map(e=>`<button type="button" data-e="${e}" class="${e===selEmoji?"sel":""}">${e}</button>`).join("");
+  $("#colourPicker").innerHTML = COLOURS.map(c=>`<button type="button" data-c="${c}" class="swatch ${c===selColour?"sel":""}" style="background:${c}" aria-label="${c}"></button>`).join("");
+  $("#dlgEmoji").textContent = selEmoji;
+}
+$("#emojiPicker").addEventListener("click", e => { const b=e.target.closest("[data-e]"); if(b){ selEmoji=b.dataset.e; buildPickers(); }});
+$("#colourPicker").addEventListener("click", e => { const b=e.target.closest("[data-c]"); if(b){ selColour=b.dataset.c; buildPickers(); }});
+
+function fillPeople(sel, includeBlank){
+  const names = [...new Set([...cfg.team, ...tasks.map(t=>t.assignee).filter(Boolean)])];
+  sel.innerHTML = (includeBlank?`<option value="">🎁 Nobody (up for grabs)</option>`:"") + names.map(n=>`<option>${esc(n)}</option>`).join("");
+}
+function openTask(t){
+  editing = t || null;
+  fillPeople($("#fAssignee"), true);
+  $("#catList").innerHTML = [...new Set(tasks.map(x=>x.category).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join("");
+  $("#dlgTitle").textContent = t ? "Edit Quest" : "New Quest";
+  $("#fTitle").value = t?.title || "";
+  $("#fDesc").value = t?.description || "";
+  $("#fAssignee").value = t ? t.assignee : me;
+  $("#fStatus").value = t?.status || "To Do";
+  $("#fPriority").value = t?.priority || "Medium";
+  $("#fDue").value = t?.dueDate || "";
+  $("#fCategory").value = t?.category || "";
+  selEmoji = t?.emoji || "✨"; selColour = t?.colour || COLOURS[0];
+  $("#deleteBtn").classList.toggle("hidden", !t);
+  buildPickers();
+  $("#taskDlg").showModal();
+  $("#fTitle").focus();
+}
+$("#addBtn").addEventListener("click", () => openTask(null));
+$("#cancelBtn").addEventListener("click", () => $("#taskDlg").close());
+$("#taskForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const base = editing || {id: uid(), source: "manual", createdBy: me};
+  const t = Object.assign({}, base, {
+    title: $("#fTitle").value.trim(), description: $("#fDesc").value.trim(),
+    assignee: $("#fAssignee").value, status: $("#fStatus").value, priority: $("#fPriority").value,
+    dueDate: $("#fDue").value, category: $("#fCategory").value.trim(), emoji: selEmoji, colour: selColour
+  });
+  if (!t.title) return;
+  $("#taskDlg").close();
+  const wasDone = editing && editing.status === "Done";
+  if (await save(editing ? "update" : "create", t)){
+    toast(editing ? "💾 Quest updated" : "✨ New quest created!");
+    if (!wasDone && t.status === "Done") confetti();
+  }
+});
+$("#deleteBtn").addEventListener("click", async () => {
+  if (!editing || !confirm("Delete this quest for everyone?")) return;
+  $("#taskDlg").close();
+  if (await save("delete", editing)) toast("🗑️ Quest deleted");
+});
+
+/* ---------------- settings ---------------- */
+$("#settingsBtn").addEventListener("click", () => {
+  $("#sGet").value = cfg.getUrl; $("#sSave").value = cfg.saveUrl;
+  $("#sTeam").value = cfg.team.join(", "); $("#sRefresh").value = cfg.refreshMinutes;
+  $("#setDlg").showModal();
+});
+$("#setCancel").addEventListener("click", () => $("#setDlg").close());
+$("#setForm").addEventListener("submit", e => {
+  e.preventDefault();
+  cfg.getUrl = $("#sGet").value.trim(); cfg.saveUrl = $("#sSave").value.trim();
+  cfg.team = $("#sTeam").value.split(",").map(s=>s.trim()).filter(Boolean);
+  cfg.refreshMinutes = Math.max(0, parseInt($("#sRefresh").value||"0",10));
+  localStorage.setItem(LS.cfg, JSON.stringify(cfg));
+  $("#setDlg").close(); fillMe(); startTimer(); load(); toast("⚙️ Settings saved");
+});
+$("#resetDemo").addEventListener("click", () => {
+  if (!confirm("Reset demo tasks in this browser?")) return;
+  localStorage.removeItem(LS.tasks); $("#setDlg").close(); load(); toast("♻️ Demo data reset");
+});
+
+/* ---------------- misc ---------------- */
+function fillMe(){
+  fillPeople($("#meSelect"), false);
+  if (!cfg.team.includes(me) && cfg.team.length) me = cfg.team[0];
+  $("#meSelect").value = me;
+}
+$("#meSelect").addEventListener("change", e => { me = e.target.value; localStorage.setItem(LS.me, me); render(); toast("👋 Hi " + me.split(" ")[0] + "!"); });
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active", x===b));
+  view = b.dataset.view; render();
+});
+["#search","#filterPriority","#filterSource"].forEach(s => $(s).addEventListener("input", render));
+$("#refreshBtn").addEventListener("click", load);
+function startTimer(){ clearInterval(refreshTimer); if (isLive() && cfg.refreshMinutes>0) refreshTimer = setInterval(load, cfg.refreshMinutes*60000); }
+
+let toastT;
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
+
+function confetti(){
+  const cv = $("#confetti"), ctx = cv.getContext("2d");
+  cv.width = innerWidth; cv.height = innerHeight;
+  const bits = Array.from({length:160}, () => ({x:innerWidth/2, y:innerHeight/3, vx:(Math.random()-.5)*16, vy:Math.random()*-14-4,
+    s:Math.random()*8+5, c:COLOURS[Math.floor(Math.random()*COLOURS.length)], r:Math.random()*6, vr:(Math.random()-.5)*.4}));
+  let f = 0;
+  (function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    bits.forEach(b => { b.vy += .4; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r); ctx.fillStyle=b.c; ctx.fillRect(-b.s/2,-b.s/4,b.s,b.s/2); ctx.restore(); });
+    if (++f < 140) requestAnimationFrame(tick); else ctx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+
+fillMe(); startTimer(); load();
+</script>
+</body>
+</html>
